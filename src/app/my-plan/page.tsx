@@ -1,119 +1,39 @@
-
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+
 import PlanSummary from "@/components/plan/PlanSummary";
 import PlanTabs from "@/components/plan/PlanTabs";
 import PlanWorkoutCard from "@/components/plan/PlanWorkoutCard";
 import EmptyPlan from "@/components/plan/EmptyPlan";
-import SortDropdown, {
-  SortOption,
-} from "@/components/plan/SortDropdown";
+import SortDropdown, { SortOption } from "@/components/plan/SortDropdown";
 
-type Workout = {
-  id: number;
-  name: string;
-  image: string;
-  muscleGroups: string[];
-  equipment: string;
-  difficulty: string;
-  duration: number;
-  caloriesBurned: number;
-  sets: number;
-  reps: string;
-  rating: number;
-  description: string;
-  instructions: string[];
-};
+import { useFitLog } from "@/context/FitLogContext";
+import { calculateTotalCalories, calculateTotalMinutes } from "@/lib/utils";
 
 type PlanTab = "today" | "saved";
 
-const getStoredWorkouts = (key: string): Workout[] => {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  try {
-    const storedData = localStorage.getItem(key);
-
-    if (!storedData) {
-      return [];
-    }
-
-    const parsedData = JSON.parse(storedData);
-
-    return Array.isArray(parsedData) ? parsedData : [];
-  } catch (error) {
-    console.error(`Failed to load ${key}:`, error);
-    return [];
-  }
-};
-
 const MyPlanPage = () => {
-  const [plan, setPlan] = useState<Workout[]>(() =>
-    getStoredWorkouts("fitlog-plan")
-  );
+  const { plan, saved, removeFromPlan, removeFromSaved, markAsDone } =
+    useFitLog();
 
-  const [saved, setSaved] = useState<Workout[]>(() =>
-    getStoredWorkouts("fitlog-saved")
-  );
+  const [activeTab, setActiveTab] = useState<PlanTab>("today");
 
-  const [activeTab, setActiveTab] =
-    useState<PlanTab>("today");
+  const [sortBy, setSortBy] = useState<SortOption>("duration");
 
-  const [sortBy, setSortBy] =
-    useState<SortOption>("duration");
+  const totalMinutes = calculateTotalMinutes(plan);
+  const totalCalories = calculateTotalCalories(plan);
 
-  const removeFromPlan = (id: number) => {
-    const updatedPlan = plan.filter(
-      (workout) => workout.id !== id
-    );
+  const currentWorkouts = useMemo(() => {
+    const workouts = activeTab === "today" ? [...plan] : [...saved];
 
-    setPlan(updatedPlan);
-
-    localStorage.setItem(
-      "fitlog-plan",
-      JSON.stringify(updatedPlan)
-    );
-  };
-
-  const removeFromSaved = (id: number) => {
-    const updatedSaved = saved.filter(
-      (workout) => workout.id !== id
-    );
-
-    setSaved(updatedSaved);
-
-    localStorage.setItem(
-      "fitlog-saved",
-      JSON.stringify(updatedSaved)
-    );
-  };
-
-  const markAsDone = (id: number) => {
-    const updatedPlan = plan.filter(
-      (workout) => workout.id !== id
-    );
-
-    setPlan(updatedPlan);
-
-    localStorage.setItem(
-      "fitlog-plan",
-      JSON.stringify(updatedPlan)
-    );
-  };
-
-  const currentWorkouts =
-    activeTab === "today" ? plan : saved;
-
-  const sortedWorkouts = [...currentWorkouts].sort(
-    (a, b) => {
+    return workouts.sort((a, b) => {
       if (sortBy === "duration") {
         return a.duration - b.duration;
       }
 
       if (sortBy === "calories") {
-        return b.caloriesBurned - a.caloriesBurned;
+        return a.caloriesBurned - b.caloriesBurned;
       }
 
       if (sortBy === "rating") {
@@ -121,25 +41,12 @@ const MyPlanPage = () => {
       }
 
       return 0;
-    }
-  );
-
-  const totalMinutes = plan.reduce(
-    (total, workout) => total + workout.duration,
-    0
-  );
-
-  const totalCalories = plan.reduce(
-    (total, workout) =>
-      total + workout.caloriesBurned,
-    0
-  );
+    });
+  }, [activeTab, plan, saved, sortBy]);
 
   return (
     <main className="min-h-screen bg-[#0b0d0f]">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:py-16">
-
- 
         <div className="mb-8">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#ccff00]">
             YOUR WORKOUTS
@@ -150,7 +57,8 @@ const MyPlanPage = () => {
           </h1>
 
           <p className="mt-3 max-w-xl text-sm leading-6 text-gray-500">
-          Cap of live lifts for today.Finish them,then load more.
+            Build your daily workout plan and keep your favorite exercises saved
+            for later.
           </p>
         </div>
 
@@ -160,51 +68,31 @@ const MyPlanPage = () => {
           calories={totalCalories}
         />
 
-   
-        <div className="mt-10">
-          <PlanTabs
-            activeTab={activeTab}
-            onChange={setActiveTab}
-          />
+        <div className="mt-10 flex flex-col gap-4 border-b border-[#20242b] pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <PlanTabs activeTab={activeTab} onChange={setActiveTab} />
+
+          <SortDropdown value={sortBy} onChange={setSortBy} />
         </div>
 
-  
-        {currentWorkouts.length > 0 && (
-          <div className="mt-6 flex justify-end">
-            <SortDropdown
-              value={sortBy}
-              onChange={setSortBy}
-            />
-          </div>
-        )}
-
-  
-        {sortedWorkouts.length === 0 ? (
-          <div className="mt-6">
+        <div className="mt-6">
+          {currentWorkouts.length === 0 ? (
             <EmptyPlan type={activeTab} />
-          </div>
-        ) : (
-          <div className="mt-6 space-y-4">
-            {sortedWorkouts.map((workout) => (
-              <PlanWorkoutCard
-                key={workout.id}
-                workout={workout}
-                isSaved={activeTab === "saved"}
-                onRemove={
-                  activeTab === "today"
-                    ? removeFromPlan
-                    : removeFromSaved
-                }
-                onDone={
-                  activeTab === "today"
-                    ? markAsDone
-                    : undefined
-                }
-              />
-            ))}
-          </div>
-        )}
-
+          ) : (
+            <div className="space-y-4">
+              {currentWorkouts.map((workout) => (
+                <PlanWorkoutCard
+                  key={workout.id}
+                  workout={workout}
+                  isSaved={activeTab === "saved"}
+                  onRemove={
+                    activeTab === "today" ? removeFromPlan : removeFromSaved
+                  }
+                  onDone={activeTab === "today" ? markAsDone : undefined}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </main>
   );

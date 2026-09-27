@@ -1,4 +1,3 @@
-
 "use client";
 
 export type SortOption = "duration" | "calories" | "rating";
@@ -8,15 +7,12 @@ type SortDropdownProps = {
   onChange: (value: SortOption) => void;
 };
 
-const SortDropdown = ({
-  value,
-  onChange,
-}: SortDropdownProps) => {
+const SortDropdown = ({ value, onChange }: SortDropdownProps) => {
   return (
     <div className="flex items-center gap-2">
       <label
         htmlFor="sort"
-        className="text-sm font-medium text-gray-700"
+        className="text-xs font-bold uppercase tracking-wide text-gray-500"
       >
         Sort:
       </label>
@@ -24,13 +20,13 @@ const SortDropdown = ({
       <select
         id="sort"
         value={value}
-        onChange={(e) =>
-          onChange(e.target.value as SortOption)
-        }
-        className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-purple-500"
+        onChange={(e) => onChange(e.target.value as SortOption)}
+        className="rounded-full border border-[#343a40] bg-[#111418] px-4 py-2 text-xs font-semibold text-white outline-none transition focus:border-[#ccff00]"
       >
         <option value="duration">Duration</option>
+
         <option value="calories">Calories</option>
+
         <option value="rating">Rating</option>
       </select>
     </div>

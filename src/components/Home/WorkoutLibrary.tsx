@@ -1,21 +1,12 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
+
 import WorkoutCard from "./WorkoutCard";
 import WorkoutSkeleton from "./WorkoutSkeleton";
 
-type Workout = {
-  id: string;
-  name: string;
-  image: string;
-  muscleGroups: string[];
-  equipment: string;
-  difficulty: string;
-  duration: number;
-  caloriesBurned: number;
-  rating: number;
-};
+import { getWorkouts } from "@/lib/api";
+import { Workout } from "@/types/workout";
 
 const WorkoutLibrary = () => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
@@ -23,49 +14,42 @@ const WorkoutLibrary = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const getWorkouts = async () => {
+    const loadWorkouts = async () => {
       try {
         setLoading(true);
+        setError("");
 
-        const response = await fetch("http://localhost:3000//fitlog.json");
-
-        if (!response.ok) {
-          throw new Error("Failed to load workouts");
-        }
-
-        const data: Workout[] = await response.json();
+        const data = await getWorkouts();
 
         setWorkouts(data);
-      } catch (err) {
-        console.error(err);
-        setError("Unable to load workouts.");
+      } catch (error) {
+        console.error("Workout fetch error:", error);
+
+        setError("Unable to load workouts. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
 
-    getWorkouts();
+    loadWorkouts();
   }, []);
 
   return (
-    <section
-      id="library"
-      className="bg-[#0b0d0f] px-4 py-16"
-    >
+    <section id="library" className="bg-[#0b0d0f] px-4 py-16">
       <div className="mx-auto max-w-7xl">
+        {/* Section Header */}
+        <div className="mb-8">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-[#ccff00]">
+            WORKOUT LIBRARY
+          </p>
 
-        <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <h2 className="text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
+            THE LIBRARY
+          </h2>
 
-          <div>
-            <h2 className="text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
-              THE LIBRARY
-            </h2>
-
-            <p className="mt-2 text-sm text-gray-500">
-              Twelve lifts covering every major muscle group.
-            </p>
-          </div>
-
+          <p className="mt-2 text-sm text-gray-500">
+            Twelve lifts covering every major muscle group.
+          </p>
         </div>
 
         {loading && (
@@ -78,19 +62,14 @@ const WorkoutLibrary = () => {
 
         {!loading && error && (
           <div className="rounded-2xl border border-red-900 bg-red-950/30 p-8 text-center">
-            <p className="text-sm text-red-400">
-              {error}
-            </p>
+            <p className="text-sm text-red-400">{error}</p>
           </div>
         )}
 
-        {!loading && !error && (
+        {!loading && !error && workouts.length > 0 && (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {workouts.map((workout) => (
-              <WorkoutCard
-                key={workout.id}
-                workout={workout}
-              />
+              <WorkoutCard key={workout.id} workout={workout} />
             ))}
           </div>
         )}
@@ -106,12 +85,9 @@ const WorkoutLibrary = () => {
             </p>
           </div>
         )}
-
       </div>
     </section>
   );
 };
 
 export default WorkoutLibrary;
-
-

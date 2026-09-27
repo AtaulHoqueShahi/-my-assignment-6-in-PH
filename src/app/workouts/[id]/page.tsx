@@ -1,21 +1,7 @@
 import { notFound } from "next/navigation";
-import WorkoutDetails from "@/components/workout/WorkoutDetails";
 
-type Workout = {
-  id: number;
-  name: string;
-  image: string;
-  muscleGroups: string[];
-  equipment: string;
-  difficulty: string;
-  duration: number;
-  caloriesBurned: number;
-  sets: number;
-  reps: string;
-  rating: number;
-  description: string;
-  instructions: string[];
-};
+import WorkoutDetails from "@/components/workout/WorkoutDetails";
+import { getWorkoutById } from "@/lib/api";
 
 type WorkoutDetailsPageProps = {
   params: Promise<{
@@ -28,22 +14,7 @@ const WorkoutDetailsPage = async ({
 }: WorkoutDetailsPageProps) => {
   const { id } = await params;
 
-  const response = await fetch(
-    "http://localhost:3000/fitlog.json",
-    {
-      cache: "no-store",
-    }
-  );
-
-  if (!response.ok) {
-    notFound();
-  }
-
-  const workouts: Workout[] = await response.json();
-
-  const workout = workouts.find(
-    (item) => item.id === Number(id)
-  );
+  const workout = await getWorkoutById(id);
 
   if (!workout) {
     notFound();
