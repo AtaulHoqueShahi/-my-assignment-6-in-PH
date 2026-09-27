@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode,
-} from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 import { toast } from "react-toastify";
 import { Workout } from "@/types/workout";
 
@@ -22,9 +16,7 @@ type FitLogContextType = {
   isSaved: (id: number) => boolean;
 };
 
-const FitLogContext = createContext<FitLogContextType | undefined>(
-  undefined
-);
+const FitLogContext = createContext<FitLogContextType | undefined>(undefined);
 
 type FitLogProviderProps = {
   children: ReactNode;
@@ -37,39 +29,23 @@ const getStoredData = <T,>(key: string, fallback: T): T => {
 
   try {
     const data = localStorage.getItem(key);
-
     return data ? JSON.parse(data) : fallback;
   } catch {
     return fallback;
   }
 };
 
-export const FitLogProvider = ({
-  children,
-}: FitLogProviderProps) => {
-  const [plan, setPlan] = useState<Workout[]>([]);
-  const [saved, setSaved] = useState<Workout[]>([]);
+export const FitLogProvider = ({ children }: FitLogProviderProps) => {
+  const [plan, setPlan] = useState<Workout[]>(() =>
+    getStoredData<Workout[]>("fitlog-plan", []),
+  );
 
-
-  useEffect(() => {
-    const storedPlan = getStoredData<Workout[]>(
-      "fitlog-plan",
-      []
-    );
-
-    const storedSaved = getStoredData<Workout[]>(
-      "fitlog-saved",
-      []
-    );
-
-    setPlan(storedPlan);
-    setSaved(storedSaved);
-  }, []);
+  const [saved, setSaved] = useState<Workout[]>(() =>
+    getStoredData<Workout[]>("fitlog-saved", []),
+  );
 
   const addToPlan = (workout: Workout) => {
-    const alreadyExists = plan.some(
-      (item) => item.id === workout.id
-    );
+    const alreadyExists = plan.some((item) => item.id === workout.id);
 
     if (alreadyExists) {
       toast.info("Workout is already in today's plan.");
@@ -77,45 +53,25 @@ export const FitLogProvider = ({
     }
 
     if (plan.length >= 5) {
-      toast.info(
-        "Today's plan can contain a maximum of 5 workouts."
-      );
+      toast.info("Today's plan can contain a maximum of 5 workouts.");
       return;
     }
 
     const updatedPlan = [...plan, workout];
-
     setPlan(updatedPlan);
-
-    localStorage.setItem(
-      "fitlog-plan",
-      JSON.stringify(updatedPlan)
-    );
-
+    localStorage.setItem("fitlog-plan", JSON.stringify(updatedPlan));
     toast.success("Added to today's plan.");
   };
 
-  
   const removeFromPlan = (id: number) => {
-    const updatedPlan = plan.filter(
-      (workout) => workout.id !== id
-    );
-
+    const updatedPlan = plan.filter((workout) => workout.id !== id);
     setPlan(updatedPlan);
-
-    localStorage.setItem(
-      "fitlog-plan",
-      JSON.stringify(updatedPlan)
-    );
-
+    localStorage.setItem("fitlog-plan", JSON.stringify(updatedPlan));
     toast.success("Workout removed from today's plan.");
   };
 
- 
   const saveWorkout = (workout: Workout) => {
-    const alreadyExists = saved.some(
-      (item) => item.id === workout.id
-    );
+    const alreadyExists = saved.some((item) => item.id === workout.id);
 
     if (alreadyExists) {
       toast.info("Workout is already saved.");
@@ -123,45 +79,22 @@ export const FitLogProvider = ({
     }
 
     const updatedSaved = [...saved, workout];
-
     setSaved(updatedSaved);
-
-    localStorage.setItem(
-      "fitlog-saved",
-      JSON.stringify(updatedSaved)
-    );
-
+    localStorage.setItem("fitlog-saved", JSON.stringify(updatedSaved));
     toast.success("Workout saved for later.");
   };
 
   const removeFromSaved = (id: number) => {
-    const updatedSaved = saved.filter(
-      (workout) => workout.id !== id
-    );
-
+    const updatedSaved = saved.filter((workout) => workout.id !== id);
     setSaved(updatedSaved);
-
-    localStorage.setItem(
-      "fitlog-saved",
-      JSON.stringify(updatedSaved)
-    );
-
+    localStorage.setItem("fitlog-saved", JSON.stringify(updatedSaved));
     toast.success("Workout removed from saved.");
   };
 
-  
   const markAsDone = (id: number) => {
-    const updatedPlan = plan.filter(
-      (workout) => workout.id !== id
-    );
-
+    const updatedPlan = plan.filter((workout) => workout.id !== id);
     setPlan(updatedPlan);
-
-    localStorage.setItem(
-      "fitlog-plan",
-      JSON.stringify(updatedPlan)
-    );
-
+    localStorage.setItem("fitlog-plan", JSON.stringify(updatedPlan));
     toast.success("Workout marked as done.");
   };
 
@@ -196,9 +129,7 @@ export const useFitLog = () => {
   const context = useContext(FitLogContext);
 
   if (!context) {
-    throw new Error(
-      "useFitLog must be used inside FitLogProvider"
-    );
+    throw new Error("useFitLog must be used inside FitLogProvider");
   }
 
   return context;
